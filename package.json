@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "open-files-with-commands",
 	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "Create commands that just open files.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
