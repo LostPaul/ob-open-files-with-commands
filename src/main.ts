@@ -15,7 +15,6 @@ export default class OpenFilesPlugin extends Plugin {
                 item
                     .setTitle("Create command for this file")
                     .setIcon("file")
-					
                     .onClick((context) => {
 						this.settingsTab.addCommand(file.name.replace(".md", ""),file.path)
 						new Notice("Created an command for this file");
