@@ -1,4 +1,4 @@
-import { Plugin, Menu, TAbstractFile, Notice } from 'obsidian';
+import { Plugin, Menu, TAbstractFile } from 'obsidian';
 import { SettingsTab, OpenFilesSettings, DEFAULT_SETTINGS } from './settings';
 
 export default class OpenFilesPlugin extends Plugin {
@@ -10,14 +10,12 @@ export default class OpenFilesPlugin extends Plugin {
 		this.addSettingTab(this.settingsTab);
 		this.settingsTab.createCommands();
 		this.registerEvent(this.app.workspace.on('file-menu', (menu: Menu, file: TAbstractFile) => {
-            console.log(file)
             menu.addItem((item) =>
                 item
                     .setTitle("Create command for this file")
                     .setIcon("file")
                     .onClick((context) => {
 						this.settingsTab.addCommand(file.name.replace(".md", ""),file.path)
-						new Notice("Created an command for this file");
                     })
             )
         }));
