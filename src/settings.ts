@@ -1,4 +1,4 @@
-import { PluginSettingTab, Setting, Command, App, TFile } from "obsidian";
+import { PluginSettingTab, Setting, Command, App, TFile, Notice } from "obsidian";
 import OpenFilesPlugin from './main';
 import { FileSuggest } from './suggesters/FileSuggester'
 export interface OpenFilesSettings {
@@ -8,6 +8,11 @@ export interface OpenFilesSettings {
 export const DEFAULT_SETTINGS: OpenFilesSettings = {
     commands: [],
     openNewTab: false
+}
+export interface fileCommand {
+    command: Command,
+    filePath: string,
+    name: string
 }
 export class SettingsTab extends PluginSettingTab {
     plugin: OpenFilesPlugin;
@@ -34,26 +39,72 @@ export class SettingsTab extends PluginSettingTab {
                     }))
 
         new Setting(containerEl)
-            .setName("Manage the commands")
-            .addTextArea(cb => cb.setValue("Enter the command name"))
+            .setHeading()
+            .setName("Manage commands")
+        new Setting(containerEl)
+            .setName("Create a new command")
             .addSearch(s => {
                 new FileSuggest(
                     s.inputEl,
                     this.plugin
                 )
             })
+            .addText(cb => cb.setValue("Enter the command name"))
+
+        for (const fileCommand of this.plugin.settings.commands) {
+            const setting = new Setting(containerEl)
+                .addButton(cb => {
+                    cb.onClick(() => {
+                        setting.clear();
+                        this.deleteCommand(fileCommand)
+                    })
+                    cb.setButtonText("X")
+                })
+                .addText(cb => {
+                    cb.setValue(fileCommand.name)
+                    cb.onChange(() => {
+                        fileCommand.name = cb.getValue();
+                        this.updateCommand(fileCommand);
+                    })
+                })
+                .addSearch(s => {
+                    new FileSuggest(
+                        s.inputEl,
+                        this.plugin
+                    )
+                    s.setValue(fileCommand.filePath)
+                    s.onChange(() => {
+                        this.updateCommand(fileCommand);
+                    })
+                });
+
+        }
     }
     createCommands() {
         for (let fileCommand of this.plugin.settings.commands) {
-            fileCommand = new FileCommand(this.plugin,fileCommand.name,fileCommand.filePath)
-            fileCommand.addCommand(this.plugin);
+            fileCommand = new FileCommand(this.plugin, fileCommand.name, fileCommand.filePath)
         }
     }
     async addCommand(name: string, filePath: string) {
-        const fileCommand = new FileCommand(this.plugin, name, filePath)
+        if (this.plugin.settings.commands.some(e => e.filePath == filePath)) {
+            return new Notice("Command already exists");
+        }
+        const fileCommand = new FileCommand(this.plugin, name, filePath);
         this.plugin.settings.commands.push(fileCommand);
         await this.plugin.saveSettings();
         this.display();
+        new Notice("Created an command for this file");
+    }
+    updateCommand(fileCommand: FileCommand) {
+        const command = fileCommand.command;
+        const { commands } = this.plugin.settings;
+        const index = commands.findIndex(c => c.command.id === command.id);
+        console.log(index)
+        if (index !== -1) {
+            console.log(fileCommand)
+            commands[index] = fileCommand;
+            this.plugin.saveSettings();
+        }
     }
     deleteCommand(fileCommand: FileCommand) {
         const command = fileCommand.command;
@@ -71,23 +122,30 @@ export class FileCommand {
     filePath: string;
     name: string;
     constructor(plugin: OpenFilesPlugin, name: string, filePath: string) {
-        this.addCommand(plugin);
         this.filePath = filePath;
         this.name = name;
+        this.addCommand(plugin);
     }
     addCommand(plugin: OpenFilesPlugin) {
         return this.command = plugin.addCommand({
             id: this.filePath,
             name: this.name,
-            callback() {   
-                const file = plugin.app.vault.getAbstractFileByPath(this.id.replace("open-files-with-commands:", ""))
-                if (file instanceof TFile) {
-                    if (plugin.settings.openNewTab) {
-                        plugin.app.workspace.getLeaf("tab").openFile(file)
-                    } else {
-                        plugin.app.workspace.getLeaf(false).openFile(file)
+            checkCallback(checking) {
+                const { id } = this;
+                if (!plugin.settings.commands.some(e => e.command.id == id)) {
+                    return false;
+                }
+                if (!checking) {
+                    const file = plugin.app.vault.getAbstractFileByPath(this.id.replace("open-files-with-commands:", ""));
+                    if (file instanceof TFile) {
+                        if (plugin.settings.openNewTab) {
+                            plugin.app.workspace.getLeaf("tab").openFile(file)
+                        } else {
+                            plugin.app.workspace.getLeaf(false).openFile(file)
+                        }
                     }
                 }
+                return true;
             },
         });
     }
