@@ -9,11 +9,6 @@ export const DEFAULT_SETTINGS: OpenFilesSettings = {
     commands: [],
     openNewTab: false
 }
-export interface fileCommand {
-    command: Command,
-    filePath: string,
-    name: string
-}
 export class SettingsTab extends PluginSettingTab {
     plugin: OpenFilesPlugin;
     app: App;
@@ -101,8 +96,11 @@ export class SettingsTab extends PluginSettingTab {
         const index = commands.findIndex(c => c.command.id === command.id);
         console.log(index)
         if (index !== -1) {
-            console.log(fileCommand)
-            commands[index] = fileCommand;
+            commands[index].name = fileCommand.name;
+            commands[index].filePath = fileCommand.filePath;
+            commands[index].command.name = "Open files with commands: "+fileCommand.name;
+            commands[index].command.id = "open-files-with-commands:"+fileCommand.filePath;
+            console.log(commands[index])
             this.plugin.saveSettings();
         }
     }
@@ -132,6 +130,7 @@ export class FileCommand {
             name: this.name,
             checkCallback(checking) {
                 const { id } = this;
+                console.log(id)
                 if (!plugin.settings.commands.some(e => e.command.id == id)) {
                     return false;
                 }
