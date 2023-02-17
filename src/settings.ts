@@ -12,6 +12,7 @@ export const DEFAULT_SETTINGS: OpenFilesSettings = {
 export class SettingsTab extends PluginSettingTab {
     plugin: OpenFilesPlugin;
     app: App;
+    commands: FileCommand[] = [];
     constructor(app: App, plugin: OpenFilesPlugin) {
         super(app, plugin);
         this.plugin = plugin;
@@ -53,7 +54,7 @@ export class SettingsTab extends PluginSettingTab {
                         setting.clear();
                         this.deleteCommand(fileCommand)
                     })
-                    cb.setButtonText("X")
+                    cb.setButtonText("✕")
                 })
                 .addText(cb => {
                     cb.setValue(fileCommand.name)
@@ -69,7 +70,10 @@ export class SettingsTab extends PluginSettingTab {
                     )
                     s.setValue(fileCommand.filePath)
                     s.onChange(() => {
-                        this.updateCommand(fileCommand);
+                        if (this.plugin.app.vault.getAbstractFileByPath(s.getValue())) {
+                            fileCommand.filePath = s.getValue();
+                            this.updateCommand(fileCommand);
+                        }
                     })
                 });
 
@@ -78,6 +82,7 @@ export class SettingsTab extends PluginSettingTab {
     createCommands() {
         for (let fileCommand of this.plugin.settings.commands) {
             fileCommand = new FileCommand(this.plugin, fileCommand.name, fileCommand.filePath)
+            this.commands.push(fileCommand);
         }
     }
     async addCommand(name: string, filePath: string) {
@@ -86,31 +91,31 @@ export class SettingsTab extends PluginSettingTab {
         }
         const fileCommand = new FileCommand(this.plugin, name, filePath);
         this.plugin.settings.commands.push(fileCommand);
+        this.commands.push(fileCommand);
         await this.plugin.saveSettings();
         this.display();
-        new Notice("Created an command for this file");
+        new Notice("Created a command for this file");
     }
-    updateCommand(fileCommand: FileCommand) {
+    async updateCommand(fileCommand: FileCommand) {
         const command = fileCommand.command;
-        const { commands } = this.plugin.settings;
+        const { commands } = this;
         const index = commands.findIndex(c => c.command.id === command.id);
-        console.log(index)
         if (index !== -1) {
             commands[index].name = fileCommand.name;
             commands[index].filePath = fileCommand.filePath;
-            commands[index].command.name = "Open files with commands: "+fileCommand.name;
-            commands[index].command.id = "open-files-with-commands:"+fileCommand.filePath;
-            console.log(commands[index])
-            this.plugin.saveSettings();
+            commands[index].command.name = "Open files with commands: " + fileCommand.name;
+            commands[index].command.id = "open-files-with-commands:" + fileCommand.filePath;
+            this.plugin.settings.commands[index] = commands[index];
+            await this.plugin.saveSettings();
         }
     }
-    deleteCommand(fileCommand: FileCommand) {
+    async deleteCommand(fileCommand: FileCommand) {
         const command = fileCommand.command;
         const { commands } = this.plugin.settings;
         const index = commands.findIndex(c => c.command.id === command.id);
         if (index !== -1) {
             commands.splice(index, 1);
-            this.plugin.saveSettings();
+            await this.plugin.saveSettings();
             this.display();
         }
     }
