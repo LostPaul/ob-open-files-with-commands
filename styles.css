@@ -6,3 +6,14 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+.ofwc-command-list,
+.ofwc-command-list.setting-item-control {
+    display: block;
+    float: left;
+    border-top: 0;
+    padding-top: 0;
+}
+.ofwc-command-list input {
+    width: 21.7rem;
+    box-sizing: border-box;
+}
