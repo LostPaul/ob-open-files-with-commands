@@ -74,7 +74,6 @@ export class SettingsTab extends PluginSettingTab {
         }
         const fileCommand = new FileCommand(name, filePath);
         fileCommand.addCommand(this.plugin);
-        console.log("settings", this.plugin.settings.commands)
         this.plugin.settings.commands.push(fileCommand);
         this.commands.push(fileCommand);
         await this.plugin.saveSettings();
@@ -122,6 +121,7 @@ export class SettingsTab extends PluginSettingTab {
                             const oldFileCommand = new FileCommand(fileCommand.name, oldFilePath);
                             oldFileCommand.updateCommand();
                             this.updateCommand(fileCommand, oldFileCommand);
+                            s.inputEl.setAttribute("filePath", fileCommand.filePath)
                         } else {
                             console.log(fileCommand.filePath)
                             s.inputEl.setAttribute("filePath", fileCommand.filePath)
@@ -148,9 +148,7 @@ export class SettingsTab extends PluginSettingTab {
             this.commands[index] = commands[index];
             await this.plugin.saveSettings();
         } else {
-            console.log(newFileCommand)
             if (newFileCommand.name.trim() != '' && this.plugin.app.vault.getAbstractFileByPath(newFileCommand.filePath)) {
-                console.log("add command", true)
                 this.addCommand(newFileCommand.name, newFileCommand.filePath)
             }
         }
