@@ -33,7 +33,6 @@ export class FileSuggest extends TextInputSuggest<TFile> {
         this.plugin.app.vault.getFiles().forEach((file: TAbstractFile) => {
             if (
                 file instanceof TFile &&
-                file.extension === "md" &&
                 file.path.toLowerCase().contains(lower_input_str)
             ) {
                 files.push(file);

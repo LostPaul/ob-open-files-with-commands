@@ -23,7 +23,7 @@ export class SettingsTab extends PluginSettingTab {
         containerEl.empty();
 
         containerEl.createEl("h2", { text: "Open files with commands settings" })
-
+        containerEl.classList.add("ofwc-settings")
         new Setting(containerEl)
             .setName("Open files in new tabs")
             .addToggle(cb =>
@@ -48,7 +48,7 @@ export class SettingsTab extends PluginSettingTab {
                 })
             })
 
-        for (const fileCommand of this.plugin.settings.commands) {
+        for (const fileCommand of this.plugin.settings.commands.filter(e => e != null)) {
             this.addCommandListOption(containerEl, fileCommand);
         }
     }
@@ -60,7 +60,7 @@ export class SettingsTab extends PluginSettingTab {
         }
     }
     async addCommand(name: string, filePath: string, notice?: boolean) {
-        if (this.plugin.settings.commands.some(e => e.filePath == filePath)) {
+        if (this.plugin.settings.commands.some(e => e?.filePath == filePath)) {
             return new Notice("Command already exists");
         }
         const fileCommand = new FileCommand(name, filePath);
@@ -79,6 +79,7 @@ export class SettingsTab extends PluginSettingTab {
             .addButton(cb => {
                 cb.onClick(() => {
                     setting.clear();
+                    console.log(fileCommand)
                     if (fileCommand.command) {
                         this.deleteCommand(fileCommand)
                     }
@@ -126,9 +127,10 @@ export class SettingsTab extends PluginSettingTab {
     async deleteCommand(fileCommand: FileCommand) {
         const command = fileCommand.command;
         const { commands } = this.plugin.settings;
-        const index = commands.findIndex(c => c.command.id === command.id);
+        const index = commands.findIndex(c => c?.command.id === command.id);
         if (index !== -1) {
             commands.splice(index, 1);
+            this.commands.splice(index, 1);
             await this.plugin.saveSettings();
             this.display();
         }
@@ -148,11 +150,15 @@ export class FileCommand {
             name: this.name,
             checkCallback(checking) {
                 const { id } = this;
-                if (!plugin.settings.commands.some(e => e.command.id == id)) {
+                if (!id) {
+                    return false;
+                }
+                console.log(plugin.settings.commands)
+                if (!plugin.settings.commands.some(e => e?.command?.id == id)) {
                     return false;
                 }
                 if (!checking) {
-                    const file = plugin.app.vault.getAbstractFileByPath(this.id.replace("open-files-with-commands:", ""));
+                    const file = plugin.app.vault.getAbstractFileByPath(id.replace("open-files-with-commands:", ""));
                     if (file instanceof TFile) {
                         if (plugin.settings.openNewTab) {
                             plugin.app.workspace.getLeaf("tab").openFile(file)
@@ -162,7 +168,7 @@ export class FileCommand {
                     }
                 }
                 return true;
-            },
+            }
         });
     }
 }

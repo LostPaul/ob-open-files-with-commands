@@ -8,12 +8,34 @@ If your plugin does not need CSS, delete this file.
 */
 .ofwc-command-list,
 .ofwc-command-list.setting-item-control {
+    flex-shrink: 0;
     display: block;
     float: left;
-    border-top: 0;
+    border-top: none;
     padding-top: 0;
+    width: 100%;
+    overflow-x: auto;
 }
+
 .ofwc-command-list input {
-    width: 21.7rem;
-    box-sizing: border-box;
+    width: 32rem !important;
+}
+
+.is-mobile .ofwc-command-list input {
+    width: 100% !important;
+}
+
+.is-mobile .ofwc-command-list button {
+    width: fit-content !important;
+}
+
+@media screen and (max-width: 1100px) {
+    .ofwc-command-list input {
+        width: 100% !important;
+    }
+
+    .ofwc-command-list,
+    .ofwc-command-list.setting-item-control {
+        overflow-x: scroll;
+    }
 }
