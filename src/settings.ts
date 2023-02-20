@@ -115,6 +115,7 @@ export class SettingsTab extends PluginSettingTab {
                 s.onChange(() => {
                     if (this.plugin.app.vault.getAbstractFileByPath(s.getValue()) instanceof TFile) {
                         fileCommand.filePath = s.getValue();
+                        console.log(fileCommand)
                         fileCommand.updateCommand();
                         const oldFilePath = s.inputEl.getAttribute("filePath") || "";
                         if (this.plugin.app.vault.getAbstractFileByPath(oldFilePath)) {
@@ -124,22 +125,30 @@ export class SettingsTab extends PluginSettingTab {
                             s.inputEl.setAttribute("filePath", fileCommand.filePath)
                         } else {
                             console.log(fileCommand.filePath)
+                            console.log(fileCommand);
                             s.inputEl.setAttribute("filePath", fileCommand.filePath)
-                            this.updateCommand(fileCommand);
+                            this.updateCommand(fileCommand, fileCommand);
                         }
                     }
                 })
             });
     }
     async updateCommand(newFileCommand: FileCommand, oldFileCommand?: FileCommand) {
+        console.log(oldFileCommand);
+        console.log(newFileCommand)
         if (newFileCommand.filePath.trim() == '') return;
-        if (newFileCommand.filePath.trim() == '') return;
+        if (newFileCommand.name.trim() == '') return;
         const { commands } = this.plugin.settings;
+        const index = commands.findIndex(c => c.command?.id === oldFileCommand?.command?.id || c.command?.id === newFileCommand?.command?.id);
         if (commands.some(c => c.command?.id == newFileCommand?.command?.id) && oldFileCommand) {
+            newFileCommand.filePath = oldFileCommand.filePath;
+            newFileCommand.command.id = "open-files-with-commands:" + newFileCommand.filePath; 
+            new Notice("File already has a command")
+            return this.display();
+        } else if (index !== -1 && (newFileCommand?.command.name == oldFileCommand?.command?.name && newFileCommand?.command?.id == oldFileCommand?.command?.id)) {
             new Notice("File already has a command")
             return this.display();
         }
-        const index = commands.findIndex(c => c.command?.id === oldFileCommand?.command?.id || c.command?.id === newFileCommand?.command?.id);
         if (index !== -1) {
             commands[index].name = newFileCommand.name;
             commands[index].filePath = newFileCommand.filePath;
