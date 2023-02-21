@@ -87,8 +87,9 @@ export class SettingsTab extends PluginSettingTab {
             .addButton(cb => {
                 cb.onClick(() => {
                     // eslint-disable-next-line
-                    if (fileCommand?.command?.id) {
-                        fileCommand.command.id = "open-files-with-commands:" + (setting.components[2] as any).inputEl.value
+                    console.log(fileCommand)
+                    if (fileCommand.filePath?.trim() !== '') {
+                        fileCommand.command.id = "open-files-with-commands:" + fileCommand.filePath
                         this.deleteCommand(fileCommand);
                     }
                     setting.clear();
@@ -114,7 +115,9 @@ export class SettingsTab extends PluginSettingTab {
                 s.inputEl.setAttribute("filePath", fileCommand.filePath)
                 s.onChange(() => {
                     if (this.plugin.app.vault.getAbstractFileByPath(s.getValue()) instanceof TFile) {
+                        console.log(fileCommand)
                         fileCommand.filePath = s.getValue();
+                        fileCommand = new FileCommand(fileCommand.name, fileCommand.filePath)
                         console.log(fileCommand)
                         fileCommand.updateCommand();
                         const oldFilePath = s.inputEl.getAttribute("filePath") || "";
@@ -123,9 +126,8 @@ export class SettingsTab extends PluginSettingTab {
                             oldFileCommand.updateCommand();
                             this.updateCommand(fileCommand, oldFileCommand);
                             s.inputEl.setAttribute("filePath", fileCommand.filePath)
-                        } else {
-                            console.log(fileCommand.filePath)
                             console.log(fileCommand);
+                        } else {
                             s.inputEl.setAttribute("filePath", fileCommand.filePath)
                             this.updateCommand(fileCommand, fileCommand);
                         }
@@ -134,18 +136,17 @@ export class SettingsTab extends PluginSettingTab {
             });
     }
     async updateCommand(newFileCommand: FileCommand, oldFileCommand?: FileCommand) {
-        console.log(oldFileCommand);
-        console.log(newFileCommand)
         if (newFileCommand.filePath.trim() == '') return;
         if (newFileCommand.name.trim() == '') return;
         const { commands } = this.plugin.settings;
         const index = commands.findIndex(c => c.command?.id === oldFileCommand?.command?.id || c.command?.id === newFileCommand?.command?.id);
-        if (commands.some(c => c.command?.id == newFileCommand?.command?.id) && oldFileCommand) {
-            newFileCommand.filePath = oldFileCommand.filePath;
-            newFileCommand.command.id = "open-files-with-commands:" + newFileCommand.filePath; 
-            new Notice("File already has a command")
-            return this.display();
-        } else if (index !== -1 && (newFileCommand?.command.name == oldFileCommand?.command?.name && newFileCommand?.command?.id == oldFileCommand?.command?.id)) {
+        console.log(oldFileCommand?.filePath)
+        console.log(newFileCommand.filePath);
+        if (commands.some(e => e.command?.id == newFileCommand?.command?.id) && oldFileCommand?.command.id !== newFileCommand.command.id && oldFileCommand) {
+            console.log("before notice", newFileCommand)
+            newFileCommand.filePath = oldFileCommand?.filePath;
+            newFileCommand.updateCommand();
+            console.log("after notice", newFileCommand);
             new Notice("File already has a command")
             return this.display();
         }
@@ -212,6 +213,7 @@ export class FileCommand {
         });
     }
     updateCommand() {
+
         this.command.name = "Open files with commands: " + this.name;
         this.command.id = "open-files-with-commands:" + this.filePath;
     }
