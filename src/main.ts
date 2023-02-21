@@ -22,8 +22,10 @@ export default class OpenFilesPlugin extends Plugin {
 
 		this.registerEvent(this.app.vault.on('rename', (file: TAbstractFile, oldPath: string) => {
 			const fileCommand = this.settingsTab.commands.find(c => c.filePath == oldPath);
-			const newFileCommand = new FileCommand(file.name, file.path);
-			this.settingsTab.updateCommand(newFileCommand, fileCommand);
+			if (fileCommand) {
+				const newFileCommand = new FileCommand(file.name, file.path);
+				this.settingsTab.updateCommand(newFileCommand, fileCommand);
+			}
 		}));
 
 		this.registerEvent(this.app.vault.on('delete', (file: TAbstractFile) => {
