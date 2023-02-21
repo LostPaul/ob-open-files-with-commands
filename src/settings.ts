@@ -140,6 +140,7 @@ export class SettingsTab extends PluginSettingTab {
         if (newFileCommand.name.trim() == '') return;
         const { commands } = this.plugin.settings;
         const index = commands.findIndex(c => c.command?.id === oldFileCommand?.command?.id || c.command?.id === newFileCommand?.command?.id);
+        console.log(index)
         console.log(oldFileCommand?.filePath)
         console.log(newFileCommand.filePath);
         if (commands.some(e => e.command?.id == newFileCommand?.command?.id) && oldFileCommand?.command.id !== newFileCommand.command.id && oldFileCommand) {
@@ -147,6 +148,9 @@ export class SettingsTab extends PluginSettingTab {
             newFileCommand.filePath = oldFileCommand?.filePath;
             newFileCommand.updateCommand();
             console.log("after notice", newFileCommand);
+            new Notice("File already has a command")
+            return this.display();
+        } else if (index != -1 && newFileCommand.command.name == oldFileCommand?.command.name && newFileCommand.command.id == oldFileCommand.command.id) {
             new Notice("File already has a command")
             return this.display();
         }
