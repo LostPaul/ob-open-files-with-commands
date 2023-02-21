@@ -3,7 +3,7 @@
 	"name": "Open files with commands",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "This is a sample plugin for Obsidian. This plugin demonstrates some of the capabilities of the Obsidian API.",
+	"description": "Create commands that only open one file at the time and that can be used with the commander plugin.",
 	"author": "Lost Paul",
 	"authorUrl": "https://github.com/LostPaul",
 	"isDesktopOnly": false
