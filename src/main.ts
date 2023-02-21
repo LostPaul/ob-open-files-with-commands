@@ -5,6 +5,7 @@ export default class OpenFilesPlugin extends Plugin {
 	settings: OpenFilesSettings;
 	settingsTab: SettingsTab;
 	async onload() {
+		console.log('loading open files with commands');
 		await this.loadSettings();
 		this.settingsTab = new SettingsTab(this.app, this);
 		this.addSettingTab(this.settingsTab);
@@ -37,7 +38,7 @@ export default class OpenFilesPlugin extends Plugin {
 	}
 
 	onunload() {
-
+		console.log('unloading open files with commands');
 	}
 
 	async loadSettings() {
