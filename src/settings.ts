@@ -1,6 +1,6 @@
 import { PluginSettingTab, Setting, Command, App, TFile, Notice } from "obsidian";
 import OpenFilesPlugin from './main';
-import { FileSuggest } from './suggesters/FileSuggester'
+import { FileSuggest } from './suggesters/FileSuggester';
 export interface OpenFilesSettings {
     commands: FileCommand[];
     openNewTab: boolean;
@@ -22,15 +22,15 @@ export class SettingsTab extends PluginSettingTab {
 
         containerEl.empty();
 
-        containerEl.createEl("h2", { text: "Open files with commands settings" })
-        containerEl.classList.add("ofwc-settings")
+        containerEl.createEl("h2", { text: "Open files with commands settings" });
+        containerEl.classList.add("ofwc-settings");
         new Setting(containerEl)
             .setName("Open files in new tabs")
             .addToggle(cb => {
                 cb.setValue(this.plugin.settings.openNewTab)
                 cb.onChange(async val => {
-                    this.plugin.settings.openNewTab = val
-                    await this.plugin.saveSettings()
+                    this.plugin.settings.openNewTab = val;
+                    await this.plugin.saveSettings();
                 })
             })
 
@@ -86,10 +86,10 @@ export class SettingsTab extends PluginSettingTab {
             .setClass("ofwc-command-list")
             .addButton(cb => {
                 cb.onClick(() => {
-                    // eslint-disable-next-line
-                    console.log(fileCommand)
-                    if (fileCommand.filePath?.trim() !== '') {
-                        fileCommand.command.id = "open-files-with-commands:" + fileCommand.filePath
+                    if (fileCommand.command?.id) {
+                        this.deleteCommand(fileCommand);
+                    } else if (fileCommand.filePath?.trim() !== '') {
+                        fileCommand.command.id = "open-files-with-commands:" + fileCommand.filePath;
                         this.deleteCommand(fileCommand);
                     }
                     setting.clear();
@@ -98,37 +98,34 @@ export class SettingsTab extends PluginSettingTab {
                 cb.setIcon("trash-2")
             })
             .addText(cb => {
-                cb.setPlaceholder("Command name")
-                cb.setValue(fileCommand.name)
+                cb.setPlaceholder("Command name");
+                cb.setValue(fileCommand.name);
                 cb.onChange(() => {
                     fileCommand.name = cb.getValue();
                     this.updateCommand(fileCommand);
                 })
             })
             .addSearch(s => {
-                s.setPlaceholder("File path")
+                s.setPlaceholder("File path");
                 new FileSuggest(
                     s.inputEl,
                     this.plugin
-                )
-                s.setValue(fileCommand.filePath)
-                s.inputEl.setAttribute("filePath", fileCommand.filePath)
+                );
+                s.setValue(fileCommand.filePath);
+                s.inputEl.setAttribute("filePath", fileCommand.filePath);
                 s.onChange(() => {
                     if (this.plugin.app.vault.getAbstractFileByPath(s.getValue()) instanceof TFile) {
-                        console.log(fileCommand)
                         fileCommand.filePath = s.getValue();
-                        fileCommand = new FileCommand(fileCommand.name, fileCommand.filePath)
-                        console.log(fileCommand)
+                        fileCommand = new FileCommand(fileCommand.name, fileCommand.filePath);
                         fileCommand.updateCommand();
                         const oldFilePath = s.inputEl.getAttribute("filePath") || "";
                         if (this.plugin.app.vault.getAbstractFileByPath(oldFilePath)) {
                             const oldFileCommand = new FileCommand(fileCommand.name, oldFilePath);
                             oldFileCommand.updateCommand();
                             this.updateCommand(fileCommand, oldFileCommand);
-                            s.inputEl.setAttribute("filePath", fileCommand.filePath)
-                            console.log(fileCommand);
+                            s.inputEl.setAttribute("filePath", fileCommand.filePath);
                         } else {
-                            s.inputEl.setAttribute("filePath", fileCommand.filePath)
+                            s.inputEl.setAttribute("filePath", fileCommand.filePath);
                             this.updateCommand(fileCommand, fileCommand);
                         }
                     }
@@ -140,18 +137,14 @@ export class SettingsTab extends PluginSettingTab {
         if (newFileCommand.name.trim() == '') return;
         const { commands } = this.plugin.settings;
         const index = commands.findIndex(c => c.command?.id === oldFileCommand?.command?.id || c.command?.id === newFileCommand?.command?.id);
-        console.log(index)
-        console.log(oldFileCommand?.filePath)
-        console.log(newFileCommand.filePath);
+
         if (commands.some(e => e.command?.id == newFileCommand?.command?.id) && oldFileCommand?.command.id !== newFileCommand.command.id && oldFileCommand) {
-            console.log("before notice", newFileCommand)
             newFileCommand.filePath = oldFileCommand?.filePath;
             newFileCommand.updateCommand();
-            console.log("after notice", newFileCommand);
-            new Notice("File already has a command")
+            new Notice("File already has a command");
             return this.display();
         } else if (index != -1 && newFileCommand.command.name == oldFileCommand?.command.name && newFileCommand.command.id == oldFileCommand.command.id) {
-            new Notice("File already has a command")
+            new Notice("File already has a command");
             return this.display();
         }
         if (index !== -1) {
@@ -206,9 +199,9 @@ export class FileCommand {
                     const file = plugin.app.vault.getAbstractFileByPath(id.replace("open-files-with-commands:", ""));
                     if (file instanceof TFile) {
                         if (plugin.settings.openNewTab) {
-                            plugin.app.workspace.getLeaf("tab").openFile(file)
+                            plugin.app.workspace.getLeaf("tab").openFile(file);
                         } else {
-                            plugin.app.workspace.getLeaf(false).openFile(file)
+                            plugin.app.workspace.getLeaf(false).openFile(file);
                         }
                     }
                 }

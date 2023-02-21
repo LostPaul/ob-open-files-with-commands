@@ -1,5 +1,5 @@
 import { Plugin, Menu, TAbstractFile } from 'obsidian';
-import { SettingsTab, OpenFilesSettings, DEFAULT_SETTINGS } from './settings';
+import { SettingsTab, OpenFilesSettings, DEFAULT_SETTINGS, FileCommand } from './settings';
 
 export default class OpenFilesPlugin extends Plugin {
 	settings: OpenFilesSettings;
@@ -15,9 +15,22 @@ export default class OpenFilesPlugin extends Plugin {
 					.setTitle("Create a command for this file")
 					.setIcon("command")
 					.onClick(() => {
-						this.settingsTab.addCommand(file.name.replace(".md", ""), file.path, true)
+						this.settingsTab.addCommand(file.name.replace(".md", ""), file.path, true);
 					})
 			)
+		}));
+
+		this.registerEvent(this.app.vault.on('rename', (file: TAbstractFile, oldPath: string) => {
+			const fileCommand = this.settingsTab.commands.find(c => c.filePath == oldPath);
+			const newFileCommand = new FileCommand(file.name, file.path);
+			this.settingsTab.updateCommand(newFileCommand, fileCommand);
+		}));
+
+		this.registerEvent(this.app.vault.on('delete', (file: TAbstractFile) => {
+			const fileCommand = this.settingsTab.commands.find(c => c.filePath == file.path);
+			if (fileCommand) {
+				this.settingsTab.deleteCommand(fileCommand);
+			}
 		}));
 	}
 
