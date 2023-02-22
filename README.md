@@ -15,7 +15,7 @@ Create commands that only open one file at the time and that can be used with th
 
 ### Right click on file names
 <p align="center">
-<img  src="https://user-images.githubusercontent.com/70213368/220427822-bf58d2e4-08cf-4b7c-962b-93def68cf116.png" width="400" height="800" />
+<img  src="https://user-images.githubusercontent.com/70213368/220427822-bf58d2e4-08cf-4b7c-962b-93def68cf116.png" width="400" height="700" />
 </p>
 
 ### Left click on the three dots
