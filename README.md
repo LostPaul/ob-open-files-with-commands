@@ -8,14 +8,14 @@ Create commands that only open one file at the time and that can be used with th
 - [How to create commands](#how-to-create-commands)
 - [How to rename and delete commands](#how-to-rename-and-delete-commands)
 - [How to install the plugin](#how-to-install-the-plugin)
-- [Showcase and how to use with commander](#showcase-and-how-to-use-with-command)
+- [Showcase and how to use with commander](#showcase-and-how-to-use-it-with-command)
 
 
 ## How to create commands
 
 ### Right click on file names
 <p align="center">
-<img  src="https://user-images.githubusercontent.com/70213368/220427822-bf58d2e4-08cf-4b7c-962b-93def68cf116.png" width="400" height="800" />
+<img  src="https://user-images.githubusercontent.com/70213368/220427822-bf58d2e4-08cf-4b7c-962b-93def68cf116.png" width="400" height="700" />
 </p>
 
 ### Left click on the three dots
@@ -41,7 +41,7 @@ More detailed description: [How to install plugins in obsidian](https://forum.ob
 ![image](https://user-images.githubusercontent.com/70213368/220440006-afc6f592-8ff9-4074-8b24-74f69c22cf18.png)
 ![zhWUnifj86Q2KlZTOtfU](https://user-images.githubusercontent.com/70213368/220440083-076bdb60-49a7-44cb-b001-37b3dd7717c3.png)
 
-## Showcase and how to use with commander
+## Showcase and how to use it with commander
 Link to the command plugin: https://obsidian.md/plugins?id=commander
 
 ## Plugin showcase
