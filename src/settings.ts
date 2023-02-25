@@ -1,7 +1,7 @@
 import { PluginSettingTab, Setting, Command, App, TFile, Notice, WorkspaceLeaf } from 'obsidian';
 import OpenFilesPlugin from './main';
 import { FileSuggest } from './suggesters/FileSuggester';
-type openFileIn = 'newTab' | 'newTabSplit' | 'newTabSplitHorizontal' | 'activeTab' | 'rightLeaf' | 'rightLeafSplit' | 'leftLeaf' | 'leftLeafSplit';
+type openFileIn = 'newTab' | 'newTabSplit' | 'newTabSplitHorizontal' | 'activeTab' | 'rightLeaf'  | 'leftLeaf' ;
 export interface OpenFilesSettings {
     commands: FileCommand[];
     openNewTab: boolean;
@@ -35,9 +35,7 @@ export class SettingsTab extends PluginSettingTab {
                         'activeTab': 'Active tab',
                         'newTab': 'New tab',
                         'rightLeaf': 'Right leaf',
-                        'rightLeafSplit': 'Right leaf splitted',
                         'leftLeaf': 'Left leaf',
-                        'leftLeafSplit': 'Left leaf splitted',
                     }
                 );
                 cb.setValue(this.plugin.settings.openFileIn);
@@ -72,7 +70,6 @@ export class SettingsTab extends PluginSettingTab {
     }
     createCommands() {
         for (let fileCommand of this.plugin.settings.commands) {
-            console.log(fileCommand)
             fileCommand = new FileCommand(fileCommand.name, fileCommand.filePath, fileCommand.openFileIn);
             fileCommand.addCommand(this.plugin);
             this.commands.push(fileCommand);
@@ -96,7 +93,6 @@ export class SettingsTab extends PluginSettingTab {
         }
     }
     async addCommandListOption(containerEl: HTMLElement, fileCommand: FileCommand) {
-        console.log(fileCommand);
         const setting = new Setting(containerEl)
         setting.setClass('ofwc-command-list')
         setting.addButton(cb => {
@@ -154,9 +150,7 @@ export class SettingsTab extends PluginSettingTab {
                     'newTabSplit': 'The tab next to the active tab',
                     'newTabSplitHorizontal': 'The tab below the active tab',
                     'rightLeaf': 'Right leaf',
-                    'rightLeafSplit': 'Right leaf splitted',
                     'leftLeaf': 'Left leaf',
-                    'leftLeafSplit': 'Left leaf splitted',
                 }
             );
             cb.setValue(fileCommand.openFileIn);
@@ -216,7 +210,6 @@ export class FileCommand {
     constructor(name: string, filePath: string, openFileIn: openFileIn) {
         this.filePath = filePath;
         this.name = name;
-        console.log(openFileIn)
         this.openFileIn = openFileIn;
         this.command = {
             id: '',
@@ -257,16 +250,8 @@ export class FileCommand {
                                 leaf = plugin.app.workspace.getRightLeaf(false);
                                 plugin.app.workspace.revealLeaf(leaf);
                                 break;
-                            case 'rightLeafSplit':
-                                leaf = plugin.app.workspace.getRightLeaf(true);
-                                plugin.app.workspace.revealLeaf(leaf);
-                                break;
                             case 'leftLeaf':
                                 leaf = plugin.app.workspace.getLeftLeaf(false);
-                                plugin.app.workspace.revealLeaf(leaf);
-                                break;
-                            case 'leftLeafSplit':
-                                leaf = plugin.app.workspace.getLeftLeaf(true);
                                 plugin.app.workspace.revealLeaf(leaf);
                                 break;
                             default:
