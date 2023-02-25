@@ -1,4 +1,4 @@
-import { Plugin, Menu, TAbstractFile } from 'obsidian';
+import { Plugin, Menu, TAbstractFile, TFile } from 'obsidian';
 import { SettingsTab, OpenFilesSettings, DEFAULT_SETTINGS, FileCommand } from './settings';
 
 export default class OpenFilesPlugin extends Plugin {
@@ -11,14 +11,16 @@ export default class OpenFilesPlugin extends Plugin {
 		this.addSettingTab(this.settingsTab);
 		this.settingsTab.createCommands();
 		this.registerEvent(this.app.workspace.on('file-menu', (menu: Menu, file: TAbstractFile) => {
-			menu.addItem((item) =>
-				item
-					.setTitle("Create a command for this file")
-					.setIcon("command")
-					.onClick(() => {
-						this.settingsTab.addCommand(file.name.replace(".md", ""), file.path, this.settings.openFileIn, true);
-					})
-			)
+			if (file instanceof TFile) {
+				menu.addItem((item) =>
+					item
+						.setTitle("Create a command for this file")
+						.setIcon("command")
+						.onClick(() => {
+							this.settingsTab.addCommand(file.name.replace(".md", ""), file.path, this.settings.openFileIn, true);
+						})
+				)
+			}
 		}));
 
 		this.registerEvent(this.app.vault.on('rename', (file: TAbstractFile, oldPath: string) => {
