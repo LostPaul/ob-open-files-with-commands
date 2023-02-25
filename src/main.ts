@@ -11,15 +11,27 @@ export default class OpenFilesPlugin extends Plugin {
 		this.addSettingTab(this.settingsTab);
 		this.settingsTab.createCommands();
 		this.registerEvent(this.app.workspace.on('file-menu', (menu: Menu, file: TAbstractFile) => {
+			const fileCommand = this.settingsTab.commands.find(c => c.filePath == file.path);
 			if (file instanceof TFile) {
-				menu.addItem((item) =>
-					item
-						.setTitle("Create a command for this file")
-						.setIcon("command")
-						.onClick(() => {
-							this.settingsTab.addCommand(file.name.replace(".md", ""), file.path, this.settings.openFileIn, true);
-						})
-				)
+				if (!fileCommand) {
+					menu.addItem((item) =>
+						item
+							.setTitle("Create a command for this file")
+							.setIcon("command")
+							.onClick(() => {
+								this.settingsTab.addCommand(file.name.replace(".md", ""), file.path, this.settings.openFileIn, true);
+							})
+					)
+				} else {
+					menu.addItem((item) =>
+						item
+							.setTitle("Delete the command for this file")
+							.setIcon("trash")
+							.onClick(() => {
+								this.settingsTab.deleteCommand(fileCommand);
+							})
+					)
+				}
 			}
 		}));
 
