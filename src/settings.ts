@@ -1,7 +1,7 @@
 import { PluginSettingTab, Setting, Command, App, TFile, Notice, WorkspaceLeaf } from 'obsidian';
 import OpenFilesPlugin from './main';
 import { FileSuggest } from './suggesters/FileSuggester';
-type openFileIn = 'newTab' | 'newTabSplit' | 'newTabSplitHorizontal' | 'activeTab' | 'rightLeaf'  | 'leftLeaf' ;
+type openFileIn = 'newTab' | 'newTabSplit' | 'newTabSplitHorizontal' | 'activeTab' | 'rightLeaf' | 'leftLeaf';
 export interface OpenFilesSettings {
     commands: FileCommand[];
     openNewTab: boolean;
@@ -32,10 +32,12 @@ export class SettingsTab extends PluginSettingTab {
             .addDropdown(cb => {
                 cb.addOptions(
                     {
-                        'activeTab': 'Active tab',
-                        'newTab': 'New tab',
-                        'rightLeaf': 'Right leaf',
-                        'leftLeaf': 'Left leaf',
+                        'activeTab': 'Open',
+                        'newTab': 'Open in a new tab',
+                        'newTabSplit': 'Open to the right',
+                        'newTabSplitHorizontal': 'Open below',
+                        'rightLeaf': 'Open in right sidebar',
+                        'leftLeaf': 'Open in left sidebar',
                     }
                 );
                 cb.setValue(this.plugin.settings.openFileIn);
@@ -145,12 +147,12 @@ export class SettingsTab extends PluginSettingTab {
         setting.addDropdown(cb => {
             cb.addOptions(
                 {
-                    'activeTab': 'Active tab',
-                    'newTab': 'New tab',
-                    'newTabSplit': 'The tab next to the active tab',
-                    'newTabSplitHorizontal': 'The tab below the active tab',
-                    'rightLeaf': 'Right leaf',
-                    'leftLeaf': 'Left leaf',
+                    'activeTab': 'Open',
+                    'newTab': 'Open in a new tab',
+                    'newTabSplit': 'Open to the right',
+                    'newTabSplitHorizontal': 'Open below',
+                    'rightLeaf': 'Open in right sidebar',
+                    'leftLeaf': 'Open in left sidebar',
                 }
             );
             cb.setValue(fileCommand.openFileIn);
