@@ -1,4 +1,4 @@
-import { PluginSettingTab, Setting, Command, App, TFile, Notice, WorkspaceLeaf } from 'obsidian';
+import { PluginSettingTab, Setting, Command, App, TFile, Notice, WorkspaceLeaf, Platform } from 'obsidian';
 import OpenFilesPlugin from './main';
 import { FileSuggest } from './suggesters/FileSuggester';
 type openFileIn = 'newTab' | 'newTabSplit' | 'newTabSplitHorizontal' | 'activeTab' | 'rightLeaf' | 'leftLeaf';
@@ -27,26 +27,27 @@ export class SettingsTab extends PluginSettingTab {
 
         containerEl.createEl('h2', { text: 'Open files with commands settings' });
         containerEl.classList.add('ofwc-settings');
-        new Setting(containerEl)
-            .setName('Choose where you want to open the files')
-            .addDropdown(cb => {
-                cb.addOptions(
-                    {
-                        'activeTab': 'Open',
-                        'newTab': 'Open in a new tab',
-                        'newTabSplit': 'Open to the right',
-                        'newTabSplitHorizontal': 'Open below',
-                        'rightLeaf': 'Open in right sidebar',
-                        'leftLeaf': 'Open in left sidebar',
-                    }
-                );
-                cb.setValue(this.plugin.settings.openFileIn);
-                cb.onChange(async (val) => {
-                    this.plugin.settings.openFileIn = val as openFileIn;
-                    await this.plugin.saveSettings();
-                });
-            })
-
+        if (Platform.isDesktopApp) {
+            new Setting(containerEl)
+                .setName('Choose where you want to open the files')
+                .addDropdown(cb => {
+                    cb.addOptions(
+                        {
+                            'activeTab': 'Open',
+                            'newTab': 'Open in a new tab',
+                            'newTabSplit': 'Open to the right',
+                            'newTabSplitHorizontal': 'Open below',
+                            'rightLeaf': 'Open in right sidebar',
+                            'leftLeaf': 'Open in left sidebar',
+                        }
+                    );
+                    cb.setValue(this.plugin.settings.openFileIn);
+                    cb.onChange(async (val) => {
+                        this.plugin.settings.openFileIn = val as openFileIn;
+                        await this.plugin.saveSettings();
+                    });
+                })
+        }
         new Setting(containerEl)
             .setHeading()
             .setName('Manage commands')
@@ -144,24 +145,25 @@ export class SettingsTab extends PluginSettingTab {
                 }
             })
         });
-        setting.addDropdown(cb => {
-            cb.addOptions(
-                {
-                    'activeTab': 'Open',
-                    'newTab': 'Open in a new tab',
-                    'newTabSplit': 'Open to the right',
-                    'newTabSplitHorizontal': 'Open below',
-                    'rightLeaf': 'Open in right sidebar',
-                    'leftLeaf': 'Open in left sidebar',
-                }
-            );
-            cb.setValue(fileCommand.openFileIn);
-            cb.onChange(async (val) => {
-                fileCommand.openFileIn = val as openFileIn;
-                this.updateCommand(fileCommand);
-            });
-        })
-
+        if (Platform.isDesktopApp) {
+            setting.addDropdown(cb => {
+                cb.addOptions(
+                    {
+                        'activeTab': 'Open',
+                        'newTab': 'Open in a new tab',
+                        'newTabSplit': 'Open to the right',
+                        'newTabSplitHorizontal': 'Open below',
+                        'rightLeaf': 'Open in right sidebar',
+                        'leftLeaf': 'Open in left sidebar',
+                    }
+                );
+                cb.setValue(fileCommand.openFileIn);
+                cb.onChange(async (val) => {
+                    fileCommand.openFileIn = val as openFileIn;
+                    this.updateCommand(fileCommand);
+                });
+            })
+        }
 
     }
     async updateCommand(newFileCommand: FileCommand, oldFileCommand?: FileCommand) {
