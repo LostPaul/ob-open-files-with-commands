@@ -33,6 +33,8 @@ After you opened you can easily delete, rename and also change the file path of 
 ![Y2KfHEI6hBPK8k5lEbbz](https://user-images.githubusercontent.com/70213368/220429660-37b877ef-d519-4070-9cf8-84e5b6b15ab1.gif)
 
 ## How to install the plugin
+Download it from the community plugins store https://obsidian.md/plugins?id=open-files-with-commands
+
 More detailed description: [How to install plugins in obsidian](https://forum.obsidian.md/t/plugins-mini-faq/7737)
 
 1. Download main.js, manifest.json, styles.css from the latest release (see [releases](https://github.com/LostPaul/ob-open-files-with-commands/releases/))
