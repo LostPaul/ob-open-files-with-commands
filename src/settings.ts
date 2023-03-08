@@ -1,4 +1,4 @@
-import { PluginSettingTab, Setting, Command, App, TFile, Notice, WorkspaceLeaf, Platform } from 'obsidian';
+import { PluginSettingTab, Setting, Command, App, TFile, Notice, WorkspaceLeaf, Platform, FileView } from 'obsidian';
 import OpenFilesPlugin from './main';
 import { FileSuggest } from './suggesters/FileSuggester';
 type openFileIn = 'newTab' | 'newTabSplit' | 'newTabSplitHorizontal' | 'activeTab' | 'rightLeaf' | 'leftLeaf';
@@ -235,6 +235,7 @@ export class FileCommand {
                 if (!checking) {
                     const file = plugin.app.vault.getAbstractFileByPath(id.replace('open-files-with-commands:', ''));
                     const fileCommand = plugin.settings.commands.find(e => e?.command?.id == id);
+                    let files: TFile[] = [];
                     if (file instanceof TFile) {
                         let leaf: WorkspaceLeaf;
                         switch (fileCommand?.openFileIn) {
@@ -251,10 +252,40 @@ export class FileCommand {
                                 leaf = plugin.app.workspace.getLeaf('split', 'vertical');
                                 break;
                             case 'rightLeaf':
+                                files = []
+                                plugin.app.workspace.getLeavesOfType('markdown').forEach(leaf => {
+                                    if (leaf.getRoot() === plugin.app.workspace.rightSplit &&
+                                    leaf.view instanceof FileView && 
+                                    leaf.view.file.path == file.path) {
+                                        plugin.app.workspace.getLeavesOfType('markdown').forEach(leaf => {
+                                            if (leaf.view instanceof FileView && leaf.view.file.path == file.path) {
+                                                plugin.app.workspace.revealLeaf(leaf)
+                                            }
+                                        })
+                                        return files.push(leaf.view.file);
+                                    }
+                                })
+                                console.log(files.length)
+                                if (files.length > 0) return;
                                 leaf = plugin.app.workspace.getRightLeaf(false);
                                 plugin.app.workspace.revealLeaf(leaf);
                                 break;
                             case 'leftLeaf':
+                                files = []
+                                plugin.app.workspace.getLeavesOfType('markdown').forEach(leaf => {
+                                    if (leaf.getRoot() === plugin.app.workspace.leftSplit &&
+                                    leaf.view instanceof FileView &&
+                                    leaf.view.file.path == file.path) {
+                                        plugin.app.workspace.getLeavesOfType('markdown').forEach(leaf => {
+                                            if (leaf.view instanceof FileView && leaf.view.file.path == file.path) {
+                                                plugin.app.workspace.revealLeaf(leaf)
+                                            }
+                                        })
+                                        return files.push(leaf.view.file);
+                                    }
+                                })
+                                console.log(files.length)
+                                if (files.length > 0) return;
                                 leaf = plugin.app.workspace.getLeftLeaf(false);
                                 plugin.app.workspace.revealLeaf(leaf);
                                 break;
