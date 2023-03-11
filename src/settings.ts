@@ -54,8 +54,9 @@ export class SettingsTab extends PluginSettingTab {
         new Setting(containerEl)
             .setName('Create a new command')
             .addButton(cb => {
-                cb.setIcon('plus')
-                cb.setClass('create-command-button')
+                cb.setIcon('plus');
+                cb.setClass('create-command-button');
+                cb.setTooltip('Create a new command');
                 cb.onClick(() => {
                     const fileCommand = new FileCommand('', '', this.plugin.settings.openFileIn);
                     fileCommand.updateCommand();
@@ -109,6 +110,7 @@ export class SettingsTab extends PluginSettingTab {
                 setting.clear();
                 setting.settingEl.remove();
             })
+            cb.setTooltip('Delete command');
             cb.setIcon('trash-2')
         });
 
@@ -116,11 +118,11 @@ export class SettingsTab extends PluginSettingTab {
             setting.addButton(cb => {
                 cb.onClick(() => {
                     fileCommand.filePath = '';
-                    
                     fileCommand.command.id = 'open-files-with-commands:' + fileCommand.filePath;
                     this.addCommandListOption(containerEl, fileCommand);
                 })
                 cb.setIcon('copy')
+                cb.setTooltip('Duplicate command');
             });
         }
 
