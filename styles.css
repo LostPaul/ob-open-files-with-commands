@@ -29,7 +29,7 @@ If your plugin does not need CSS, delete this file.
     width: fit-content !important;
 }
 
-@media screen and (max-width: 1200px) {
+@media screen and (max-width: 1250px) {
     .ofwc-command-list input {
         width: 100% !important;
     }

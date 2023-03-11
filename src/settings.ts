@@ -111,6 +111,19 @@ export class SettingsTab extends PluginSettingTab {
             })
             cb.setIcon('trash-2')
         });
+
+        if (Platform.isDesktopApp) {
+            setting.addButton(cb => {
+                cb.onClick(() => {
+                    fileCommand.filePath = '';
+                    
+                    fileCommand.command.id = 'open-files-with-commands:' + fileCommand.filePath;
+                    this.addCommandListOption(containerEl, fileCommand);
+                })
+                cb.setIcon('copy')
+            });
+        }
+
         setting.addText(cb => {
             cb.setPlaceholder('Command name');
             cb.setValue(fileCommand.name);
