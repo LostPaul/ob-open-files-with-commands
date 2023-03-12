@@ -65,7 +65,6 @@ export class SettingsTab extends PluginSettingTab {
                 })
             })
         for (const fileCommand of this.commands.filter(e => e != null)) {
-            console.log(fileCommand);
             this.addCommandListOption(containerEl, fileCommand);
         }
         if (this.plugin.settings.commands.length == 0) {
@@ -79,7 +78,6 @@ export class SettingsTab extends PluginSettingTab {
         for (const fileCommand of this.plugin.settings.commands) {
             const newFileCommand = new FileCommand(fileCommand.name, fileCommand.filePath, fileCommand.openFileIn, fileCommand.id);
             newFileCommand.createCommand(this.plugin);
-            console.log(fileCommand);
             if (!fileCommand?.id) {
                 this.plugin.settings.commands[i] = newFileCommand;
             }
@@ -133,7 +131,6 @@ export class SettingsTab extends PluginSettingTab {
             cb.setValue(fileCommand.name);
             cb.onChange(() => {
                 fileCommand.name = cb.getValue();
-                console.log(fileCommand);
                 this.updateCommand(fileCommand);
             })
         });
@@ -153,7 +150,6 @@ export class SettingsTab extends PluginSettingTab {
                             fileCommand = newFileCommand;
                             this.updateCommand(fileCommand);
                         } else {
-                            console.log(fileCommand)
                             new Notice('File already has a command');
                             return this.display();
                         }
@@ -197,18 +193,13 @@ export class SettingsTab extends PluginSettingTab {
             oldFileCommand = this.commands.find(c => c.id == newFileCommand.id);
         }
         const { commands } = this.plugin.settings;
-        console.log(this.commands)
-        console.log(commands)
         const index = commands.findIndex(c => c.id == newFileCommand.id);
 
         if (commands.some(e => e.filePath == newFileCommand.filePath && e.id != newFileCommand.id)) {
-            console.log('File already has a command');
             new Notice('File already has a command');
-            console.log(this.commands)
             newFileCommand.filePath = this.commands.find(c => c.id == newFileCommand.id)?.filePath || newFileCommand.filePath;
             return false;
         } else if (index !== -1) {
-            console.log('update command');
             commands[index].name = newFileCommand.name;
             commands[index].filePath = newFileCommand.filePath;
             commands[index].command.name = 'Open files with commands: ' + newFileCommand.name;
