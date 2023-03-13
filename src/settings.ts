@@ -76,7 +76,7 @@ export class SettingsTab extends PluginSettingTab {
     createCommands() {
         let i = 0;
         for (const fileCommand of this.plugin.settings.commands) {
-            const newFileCommand = new FileCommand(fileCommand.name, fileCommand.filePath, fileCommand.openFileIn, fileCommand.id);
+            const newFileCommand = new FileCommand(fileCommand.name, fileCommand.filePath, fileCommand.openFileIn, fileCommand.id || crypto.randomUUID());
             newFileCommand.createCommand(this.plugin);
             if (!fileCommand?.id) {
                 this.plugin.settings.commands[i] = newFileCommand;
