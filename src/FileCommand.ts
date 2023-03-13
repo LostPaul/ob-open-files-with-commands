@@ -19,7 +19,7 @@ export class FileCommand {
     }
     async createCommand(plugin: OpenFilesPlugin) {
         return this.command = plugin.addCommand({
-            id: this.filePath,
+            id: this.id,
             name: this.name,
             checkCallback(checking) {
                 const { id } = this;
