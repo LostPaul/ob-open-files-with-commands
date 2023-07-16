@@ -6,19 +6,22 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
-.ofwc-command-list,
-.ofwc-command-list.setting-item-control {
-    flex-shrink: 0;
-    display: block;
-    float: left;
-    border-top: none;
-    padding-top: 0;
-    width: 100%;
-    overflow-x: auto;
+.ofwc-command-list.setting-item {
+    border-top: 0 !important;
+    border-bottom: 0 !important;
 }
 
-.ofwc-command-list input {
-    width: 19rem !important;
+.ofwc-command-list .setting-item-control {
+    display: flex;
+    justify-content: flex-start !important;
+}
+
+.ofwc-command-list .setting-item-info {
+    display: none !important;
+}
+
+.ofwc-command-list .search-input-container {
+    width: 100%;
 }
 
 .is-mobile .ofwc-command-list input {
