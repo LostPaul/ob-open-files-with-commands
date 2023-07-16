@@ -4,49 +4,51 @@ import { FileCommand } from './FileCommand';
 export default class OpenFilesPlugin extends Plugin {
 	settings: OpenFilesSettings;
 	settingsTab: SettingsTab;
+	commands: FileCommand[] = [];
 	async onload() {
 		console.log('loading open files with commands');
 		await this.loadSettings();
 		this.settingsTab = new SettingsTab(this.app, this);
 		this.addSettingTab(this.settingsTab);
-		this.settingsTab.createCommands();
 		this.registerEvent(this.app.workspace.on('file-menu', (menu: Menu, file: TAbstractFile) => {
-			const fileCommand = this.settingsTab.commands.find(c => c.filePath == file.path);
-			if (file instanceof TFile) {
-				if (!fileCommand) {
-					menu.addItem((item) =>
-						item
-							.setTitle("Create a command for this file")
-							.setIcon("command")
-							.onClick(() => {
-								this.settingsTab.addCommand(file.name.replace(".md", ""), file.path, this.settings.openFileIn, crypto.randomUUID(), true);
-							})
-					)
-				} else {
-					menu.addItem((item) =>
-						item
-							.setTitle("Delete the command for this file")
-							.setIcon("trash")
-							.onClick(() => {
-								this.settingsTab.deleteCommand(fileCommand);
-							})
-					)
-				}
+			const fileCommand = this.commands.find(c => c.filePath == file.path);
+			if (!(file instanceof TFile)) { return; }
+			if (!fileCommand) {
+				menu.addItem((item) =>
+					item
+						.setTitle("Create a command for this file")
+						.setIcon("command")
+						.onClick(() => {
+							const name = file.name.replace(".md", "");
+							this.settingsTab.addCommand(name, file.path, this, crypto.randomUUID(), true);
+						})
+				)
+			} else {
+				menu.addItem((item) =>
+					item
+						.setTitle("Delete the command for this file")
+						.setIcon("trash")
+						.onClick(() => {
+							this.settingsTab.deleteCommand(fileCommand.id);
+						})
+				)
 			}
 		}));
 
 		this.registerEvent(this.app.vault.on('rename', (file: TAbstractFile, oldPath: string) => {
-			const fileCommand = this.settingsTab.commands.find(c => c.filePath == oldPath);
+			if (!(file instanceof TFile)) return;
+			const fileCommand = this.commands.find(c => c.filePath == oldPath);
 			if (fileCommand) {
-				const newFileCommand = new FileCommand(file.name, file.path, this.settings.openFileIn, fileCommand.id);
-				this.settingsTab.updateCommand(newFileCommand, fileCommand);
+				const name = file.name.replace(".md", "");
+				const newFileCommand = this.settingsTab.createFileCommand(name, file.path, this, fileCommand);
+				fileCommand.updateCommand(newFileCommand);
 			}
 		}));
 
 		this.registerEvent(this.app.vault.on('delete', (file: TAbstractFile) => {
-			const fileCommand = this.settingsTab.commands.find(c => c.filePath == file.path);
+			const fileCommand = this.commands.find(c => c.filePath == file.path);
 			if (fileCommand) {
-				this.settingsTab.deleteCommand(fileCommand);
+				this.settingsTab.deleteCommand(fileCommand.id);
 			}
 		}));
 	}

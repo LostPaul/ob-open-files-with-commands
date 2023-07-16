@@ -16,10 +16,10 @@ export const DEFAULT_SETTINGS: OpenFilesSettings = {
 export class SettingsTab extends PluginSettingTab {
     plugin: OpenFilesPlugin;
     app: App;
-    commands: FileCommand[] = [];
     constructor(app: App, plugin: OpenFilesPlugin) {
         super(app, plugin);
         this.plugin = plugin;
+        this.createCommands();
     }
     display(): void {
         const { containerEl } = this;
@@ -34,7 +34,7 @@ export class SettingsTab extends PluginSettingTab {
                 .addDropdown(cb => {
                     cb.addOptions(
                         {
-                            'activeTab': 'Open',
+                            'activeTab': 'Open in active tab',
                             'newTab': 'Open in a new tab',
                             'newTabSplit': 'Open to the right',
                             'newTabSplitHorizontal': 'Open below',
@@ -59,54 +59,48 @@ export class SettingsTab extends PluginSettingTab {
                 cb.setClass('create-command-button');
                 cb.setTooltip('Create a new command');
                 cb.onClick(() => {
-                    const fileCommand = new FileCommand('', '', this.plugin.settings.openFileIn, crypto.randomUUID());
-                    fileCommand.updateCommand();
+                    const fileCommand = this.createFileCommand('', '', this.plugin);
+                    this.saveFileCommand(fileCommand);
+                    fileCommand.createCommand(this.plugin);
                     this.addCommandListOption(containerEl, fileCommand);
                 })
             })
-        for (const fileCommand of this.commands.filter(e => e != null)) {
+        this.plugin.commands.forEach(fileCommand => {
             this.addCommandListOption(containerEl, fileCommand);
-        }
+        });
         if (this.plugin.settings.commands.length == 0) {
-            const fileCommand = new FileCommand('', '', this.plugin.settings.openFileIn, crypto.randomUUID());
-            fileCommand.updateCommand();
+            const fileCommand = this.createFileCommand('', '', this.plugin);
+            this.saveFileCommand(fileCommand);
+            this.plugin.commands.push(fileCommand);
             this.addCommandListOption(containerEl, fileCommand);
         }
     }
     createCommands() {
         let i = 0;
+        this.plugin.commands = [];
         for (const fileCommand of this.plugin.settings.commands) {
-            const newFileCommand = new FileCommand(fileCommand.name, fileCommand.filePath, fileCommand.openFileIn, fileCommand.id || crypto.randomUUID());
+            if (!fileCommand) continue;
+            if (!fileCommand.id) fileCommand.id = crypto.randomUUID();
+            const newFileCommand = this.createFileCommand(fileCommand.name, fileCommand.filePath, this.plugin, fileCommand);
             newFileCommand.createCommand(this.plugin);
             if (!fileCommand?.id) {
                 this.plugin.settings.commands[i] = newFileCommand;
             }
-            this.commands.push(newFileCommand);
+            this.plugin.commands.push(newFileCommand);
             i++;
         }
         this.plugin.saveSettings();
-    }
-    async addCommand(name: string, filePath: string, openFileIn: openFileIn, id: string, notice?: boolean) {
-        if (this.plugin.settings.commands.some(e => e?.filePath == filePath)) {
-            return false;
-        }
-        const fileCommand = new FileCommand(name, filePath, openFileIn, id);
-        fileCommand.createCommand(this.plugin);
-        this.plugin.settings.commands.push(fileCommand);
-        this.commands.push(fileCommand);
-        await this.plugin.saveSettings();
-        return fileCommand;
     }
     async addCommandListOption(containerEl: HTMLElement, fileCommand: FileCommand) {
         const setting = new Setting(containerEl)
         setting.setClass('ofwc-command-list')
         setting.addButton(cb => {
             cb.onClick(() => {
-                if (fileCommand.command?.id) {
-                    this.deleteCommand(fileCommand);
+                if (fileCommand.id) {
+                    this.deleteCommand(fileCommand.id);
                 } else if (fileCommand.filePath?.trim() !== '') {
                     fileCommand.command.id = 'open-files-with-commands:' + fileCommand.id;
-                    this.deleteCommand(fileCommand);
+                    this.deleteCommand(fileCommand.id);
                 }
                 setting.clear();
                 setting.settingEl.remove();
@@ -118,8 +112,10 @@ export class SettingsTab extends PluginSettingTab {
         if (Platform.isDesktopApp) {
             setting.addButton(cb => {
                 cb.onClick(() => {
-                    fileCommand = new FileCommand(fileCommand.name, '', fileCommand.openFileIn, crypto.randomUUID());
-                    this.addCommandListOption(containerEl, fileCommand);
+                    const newFileCommand = this.createFileCommand(fileCommand.name, fileCommand.filePath, this.plugin);
+                    this.addCommandListOption(containerEl, newFileCommand);
+                    this.saveFileCommand(newFileCommand);
+                    newFileCommand.createCommand(this.plugin);
                 })
                 cb.setIcon('copy')
                 cb.setTooltip('Duplicate command');
@@ -131,7 +127,9 @@ export class SettingsTab extends PluginSettingTab {
             cb.setValue(fileCommand.name);
             cb.onChange(() => {
                 fileCommand.name = cb.getValue();
-                this.updateCommand(fileCommand);
+                fileCommand.updateCommand(fileCommand)
+                this.plugin.saveSettings();
+
             })
         });
         setting.addSearch(s => {
@@ -143,25 +141,31 @@ export class SettingsTab extends PluginSettingTab {
             s.setValue(fileCommand.filePath);
             s.inputEl.setAttribute('filePath', fileCommand.filePath);
             s.onChange(async () => {
-                if (this.plugin.app.vault.getAbstractFileByPath(s.getValue()) instanceof TFile) {
-                    if (this.plugin.settings.commands.findIndex(e => e?.id == fileCommand.id) == -1) {
-                        const newFileCommand = await this.addCommand(fileCommand.name, s.getValue(), fileCommand.openFileIn, fileCommand.id);
+                const path = s.getValue();
+                const file = this.plugin.app.vault.getAbstractFileByPath(path);
+                if (!(file instanceof TFile)) { return false; }
+                if (this.plugin.commands.findIndex(e => e?.id == fileCommand.id) == -1) {
+                    if (this.plugin.settings.commands.some(e => e?.id == fileCommand.id)) {
+                        fileCommand.filePath = path;
+                        fileCommand.createCommand(this.plugin);
+                        this.plugin.saveSettings();
+                    } else {
+                        const newFileCommand = await this.addCommand(fileCommand.name, path, this.plugin, fileCommand.id);
                         if (newFileCommand) {
-                            fileCommand = newFileCommand;
-                            this.updateCommand(fileCommand);
+                            fileCommand.filePath = path;
+                            this.plugin.saveSettings();
                         } else {
                             new Notice('File already has a command');
                             return this.display();
                         }
-                    } else {
-                        fileCommand.filePath = s.getValue();
-                        fileCommand = new FileCommand(fileCommand.name, fileCommand.filePath, fileCommand.openFileIn, fileCommand.id);
-                        fileCommand.updateCommand();
-                        if (!await this.updateCommand(fileCommand)) {
-                            fileCommand.filePath = this.plugin.settings.commands.find(e => e?.id == fileCommand.id)?.filePath || fileCommand.filePath;
-                            this.commands[this.commands.findIndex(e => e?.id == fileCommand.id)] = fileCommand;
-                            this.display();
-                        }
+                    }
+                } else {
+                    fileCommand.filePath = path;
+                    fileCommand = this.createFileCommand(fileCommand.name, path, this.plugin, fileCommand)
+                    if (!fileCommand.updateCommand(fileCommand)) {
+                        fileCommand.filePath = this.plugin.settings.commands.find(e => e?.id == fileCommand.id)?.filePath || fileCommand.filePath;
+                        this.plugin.commands[this.plugin.commands.findIndex(e => e?.id == fileCommand.id)] = fileCommand;
+                        this.display();
                     }
                 }
             })
@@ -170,7 +174,7 @@ export class SettingsTab extends PluginSettingTab {
             setting.addDropdown(cb => {
                 cb.addOptions(
                     {
-                        'activeTab': 'Open',
+                        'activeTab': 'Open in active tab',
                         'newTab': 'Open in a new tab',
                         'newTabSplit': 'Open to the right',
                         'newTabSplitHorizontal': 'Open below',
@@ -181,47 +185,46 @@ export class SettingsTab extends PluginSettingTab {
                 cb.setValue(fileCommand.openFileIn);
                 cb.onChange(async (val) => {
                     fileCommand.openFileIn = val as openFileIn;
-                    this.updateCommand(fileCommand);
+                    fileCommand.updateCommand(fileCommand);
+                    this.plugin.saveSettings();
                 });
             })
         }
     }
 
-    async updateCommand(newFileCommand: FileCommand, oldFileCommand?: FileCommand) {
-        if (newFileCommand.name.trim() == '') return;
-        if (!oldFileCommand) {
-            oldFileCommand = this.commands.find(c => c.id == newFileCommand.id);
-        }
+    async deleteCommand(id: string) {
         const { commands } = this.plugin.settings;
-        const index = commands.findIndex(c => c.id == newFileCommand.id);
-
-        if (commands.some(e => e.filePath == newFileCommand.filePath && e.id != newFileCommand.id)) {
-            new Notice('File already has a command');
-            newFileCommand.filePath = this.commands.find(c => c.id == newFileCommand.id)?.filePath || newFileCommand.filePath;
-            return false;
-        } else if (index !== -1) {
-            commands[index].name = newFileCommand.name;
-            commands[index].filePath = newFileCommand.filePath;
-            commands[index].command.name = 'Open files with commands: ' + newFileCommand.name;
-            commands[index].command.id = 'open-files-with-commands:' + newFileCommand.id;
-            commands[index].openFileIn = newFileCommand.openFileIn;
-            this.commands[index] = commands[index];
-            await this.plugin.saveSettings();
-            return true;
-        } else {
-            if (newFileCommand.name.trim() != '' && this.plugin.app.vault.getAbstractFileByPath(newFileCommand.filePath)) {
-                this.addCommand(newFileCommand.name, newFileCommand.filePath, newFileCommand.openFileIn, newFileCommand.id);
-                return true;
-            }
-        }
+        this.plugin.settings.commands = commands.filter(c => c.id !== id);
+        this.plugin.commands = this.plugin.commands.filter(c => c.id !== id);
+        await this.plugin.saveSettings();
     }
-    async deleteCommand(fileCommand: FileCommand) {
-        const { commands } = this.plugin.settings;
-        const index = commands.findIndex(c => c.id === fileCommand?.id);
-        if (index !== -1) {
-            commands.splice(index, 1);
-            this.commands.splice(index, 1);
-            await this.plugin.saveSettings();
+
+    createFileCommand(name: string, file: TFile | string, plugin: OpenFilesPlugin, fileCommand?: FileCommand): FileCommand {
+        if (!fileCommand) {
+            const id = crypto.randomUUID();
+            fileCommand = new FileCommand(name, file, plugin, id);
+        } else {
+            fileCommand = new FileCommand(name, file, plugin, fileCommand.id);
         }
+        return fileCommand;
+    }
+
+    saveFileCommand(fileCommand: FileCommand, settingsOnly?: boolean) {
+        if (!settingsOnly) {
+            this.plugin.commands.push(fileCommand);
+        }
+        this.plugin.settings.commands.push(({ id: fileCommand.id, name: fileCommand.name, filePath: fileCommand.filePath, openFileIn: fileCommand.openFileIn, command: fileCommand.command }) as FileCommand);
+        this.plugin.saveSettings();
+    }
+
+    async addCommand(name: string, filePath: string, plugin: OpenFilesPlugin, id: string, notice?: boolean) {
+        if (this.plugin.settings.commands.some(e => e?.filePath == filePath)) { return false; }
+        const file = this.plugin.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) { return false; }
+        const fileCommand = this.createFileCommand(name, file, plugin, new FileCommand(name, file, plugin, id));
+        fileCommand.createCommand(this.plugin);
+        this.saveFileCommand(fileCommand);
+        return fileCommand;
     }
 }
+
