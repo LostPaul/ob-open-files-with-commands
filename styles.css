@@ -1,11 +1,3 @@
-/*
-
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
-
-If your plugin does not need CSS, delete this file.
-
-*/
 .ofwc-command-list.setting-item {
     border-top: 0 !important;
     border-bottom: 0 !important;
