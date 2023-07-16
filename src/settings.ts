@@ -75,22 +75,6 @@ export class SettingsTab extends PluginSettingTab {
             this.addCommandListOption(containerEl, fileCommand);
         }
     }
-    createCommands() {
-        let i = 0;
-        this.plugin.commands = [];
-        for (const fileCommand of this.plugin.settings.commands) {
-            if (!fileCommand) continue;
-            if (!fileCommand.id) fileCommand.id = crypto.randomUUID();
-            const newFileCommand = this.createFileCommand(fileCommand.name, fileCommand.filePath, this.plugin, fileCommand);
-            newFileCommand.createCommand(this.plugin);
-            if (!fileCommand?.id) {
-                this.plugin.settings.commands[i] = newFileCommand;
-            }
-            this.plugin.commands.push(newFileCommand);
-            i++;
-        }
-        this.plugin.saveSettings();
-    }
     async addCommandListOption(containerEl: HTMLElement, fileCommand: FileCommand) {
         const setting = new Setting(containerEl)
         setting.setClass('ofwc-command-list')
@@ -225,6 +209,22 @@ export class SettingsTab extends PluginSettingTab {
         fileCommand.createCommand(this.plugin);
         this.saveFileCommand(fileCommand);
         return fileCommand;
+    }
+    createCommands() {
+        let i = 0;
+        this.plugin.commands = [];
+        for (const fileCommand of this.plugin.settings.commands) {
+            if (!fileCommand) continue;
+            if (!fileCommand.id) fileCommand.id = crypto.randomUUID();
+            const newFileCommand = this.createFileCommand(fileCommand.name, fileCommand.filePath, this.plugin, fileCommand);
+            newFileCommand.createCommand(this.plugin);
+            if (!fileCommand?.id) {
+                this.plugin.settings.commands[i] = newFileCommand;
+            }
+            this.plugin.commands.push(newFileCommand);
+            i++;
+        }
+        this.plugin.saveSettings();
     }
 }
 
