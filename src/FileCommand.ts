@@ -99,7 +99,7 @@ export class FileCommand {
         const pathIsDifferent = this.filePath != newFileCommand.filePath;
         const nameIsDifferent = this.name != newFileCommand.name;
         const openFileInIsDifferent = this.openFileIn != newFileCommand.openFileIn;
-        if (fileWithSamePath) {
+        if (fileWithSamePath && newFileCommand.filePath != '') {
             new Notice(`A command with the same file path already exists: "${fileWithSamePath.name}"`);
             newFileCommand.filePath = commands.find(e => e.id == newFileCommand.id)?.filePath || '';
             return false;
