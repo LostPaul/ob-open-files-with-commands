@@ -37,7 +37,7 @@ export class FileCommand {
                 if (!fileCommand) { return false; }
                 if (checking) { return true; }
                 (async () => {
-                    const filePath = await replaceArgs(fileCommand.filePath, plugin);
+                    let filePath = await replaceArgs(fileCommand.filePath, plugin);
                     const file = plugin.app.vault.getAbstractFileByPath(filePath || '');
                     if (!(file instanceof TFile)) {
                         new Notice(`File "${filePath}" not found`);
@@ -89,23 +89,40 @@ export class FileCommand {
 async function replaceArgs(filePath: string, plugin: OpenFilesPlugin) {
     const args = filePath.match(/\{\{([^}]+)\}\}/g);
     if (args) {
-        args.forEach(arg => {
-            let argName = arg.replace(/\{\{([^}]+)\}\}/g, '$1');
-            if (argName.startsWith('date:') || argName.startsWith('d:')) {
-                argName = argName.replace('date:', '').replace('d:', '');
-                const argValue = moment().format(argName);
-                filePath = filePath.replace(arg, argValue);
+        const result = await replaceVariables(filePath, plugin, args);
+        if (result !== undefined) {
+            filePath = result;
+        }
+    }
+    return filePath;
+}
+async function replaceVariables(filePath: string, plugin: OpenFilesPlugin, args: RegExpMatchArray) {
+    for (const arg of args) {
+        let argName = arg.replace(/\{\{([^}]+)\}\}/g, '$1');
+        if (argName.startsWith('date:') || argName.startsWith('d:')) {
+            argName = argName.replace('date:', '').replace('d:', '');
+            const argValue = moment().format(argName);
+            filePath = filePath.replace(arg, argValue);
+        }
+        const customVariable = plugin.settings.customVariables.find(e => e.name == argName);
+        if (!customVariable) continue;
+        if (argName != customVariable.name) continue;
+        if (customVariable.type === 'javascript') {
+            const myFunction = new Function(customVariable.value);
+            filePath = filePath.replace(arg, myFunction());
+        } else {
+            const args = customVariable.value.match(/\{\{([^}]+)\}\}/g);
+            let customVariableCopy = Object.assign({}, customVariable);
+            if (args) {
+                const result = await replaceVariables(customVariable.value, plugin, args);
+                if (result !== undefined) {
+                    customVariableCopy.value = result;
+                }
             }
-            const customVariable = plugin.settings.customVariables.find(e => e.name == argName);
-            if (!customVariable) return;
-            if (argName != customVariable.name) return;
-            if (customVariable.type === 'javascript') {
-                const myFunction = new Function(customVariable.value);
-                filePath = filePath.replace(arg, myFunction());
-            } else {
-                filePath = filePath.replace(arg, customVariable.value);
-            }
-        })
+            console.log('arg', arg);
+            console.log('customVariableCopy.value', customVariableCopy.value);
+            filePath = filePath.replace(arg, customVariableCopy.value);
+        }
     }
     return filePath;
 }

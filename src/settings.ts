@@ -19,7 +19,18 @@ export const DEFAULT_SETTINGS: OpenFilesSettings = {
     openNewTab: false,
     openFileIn: 'activeTab',
     commands: [],
-    customVariables: [],
+    customVariables: [
+        {
+            name: 'date',
+            value: '{{d:YYYY-MM-DD}}',
+            type: 'string'
+        },
+        {
+            name: 'time',
+            value: '{{d:HH:mm:ss}}',
+            type: 'string'
+        },
+    ],
 }
 export class SettingsTab extends PluginSettingTab {
     plugin: OpenFilesPlugin;
