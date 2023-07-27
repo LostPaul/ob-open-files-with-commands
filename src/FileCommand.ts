@@ -1,5 +1,5 @@
 import OpenFilesPlugin from './main';
-import { Command, TFile, WorkspaceLeaf, FileView, Notice } from 'obsidian';
+import { Command, TFile, WorkspaceLeaf, FileView, Notice, moment } from 'obsidian';
 import { openFileIn } from './settings';
 export class FileCommand {
     id: string;
@@ -36,59 +36,19 @@ export class FileCommand {
                 const fileCommand = plugin.settings.commands.find(e => e.id == id);
                 if (!fileCommand) { return false; }
                 if (checking) { return true; }
-                const file = plugin.app.vault.getAbstractFileByPath(fileCommand?.filePath || '');
-                if (!(file instanceof TFile)) {
-                    new Notice(`File "${fileCommand?.filePath}" not found`);
-                    return false;
-                }
-                const files: TFile[] = [];
-                let leaf: WorkspaceLeaf;
-                switch (fileCommand?.openFileIn) {
-                    case 'activeTab':
-                        leaf = plugin.app.workspace.getLeaf(false);
-                        break;
-                    case 'newTab':
-                        leaf = plugin.app.workspace.getLeaf('tab');
-                        break;
-                    case 'newTabSplitHorizontal':
-                        leaf = plugin.app.workspace.getLeaf('split', 'horizontal');
-                        break;
-                    case 'newTabSplit':
-                        leaf = plugin.app.workspace.getLeaf('split', 'vertical');
-                        break;
-                    case 'rightLeaf':
-                        plugin.app.workspace.getLeavesOfType('markdown').forEach(leaf => {
-                            if (leaf.getRoot() === plugin.app.workspace.rightSplit &&
-                                leaf.view instanceof FileView &&
-                                leaf.view.file.path == file.path) {
-                                if (leaf.view instanceof FileView && leaf.view.file.path == file.path) {
-                                    plugin.app.workspace.revealLeaf(leaf)
-                                    return files.push(leaf.view.file);
-                                }
-                            }
-                        })
-                        if (files.length > 0) return;
-                        leaf = plugin.app.workspace.getRightLeaf(false);
-                        plugin.app.workspace.revealLeaf(leaf);
-                        break;
-                    case 'leftLeaf':
-                        plugin.app.workspace.getLeavesOfType('markdown').forEach(leaf => {
-                            if (leaf.getRoot() === plugin.app.workspace.leftSplit &&
-                                leaf.view instanceof FileView &&
-                                leaf.view.file.path == file.path) {
-                                plugin.app.workspace.revealLeaf(leaf)
-                                return files.push(leaf.view.file);
-                            }
-                        })
-                        if (files.length > 0) return;
-                        leaf = plugin.app.workspace.getLeftLeaf(false);
-                        plugin.app.workspace.revealLeaf(leaf);
-                        break;
-                    default:
-                        leaf = plugin.app.workspace.getLeaf(false);
-                        break;
-                }
-                leaf.openFile(file);
+                (async () => {
+                    const filePath = await replaceArgs(fileCommand.filePath, plugin);
+                    const file = plugin.app.vault.getAbstractFileByPath(filePath || '');
+                    if (!(file instanceof TFile)) {
+                        new Notice(`File "${filePath}" not found`);
+                        return false;
+                    }
+                    const files: TFile[] = [];
+                    let leaf: WorkspaceLeaf | null | undefined = null;
+                    leaf = getLeaf(plugin, leaf, fileCommand, files, file);
+                    if (!leaf) { return; }
+                    leaf.openFile(file);
+                })();
             }
         });
     }
@@ -126,4 +86,74 @@ export class FileCommand {
         return true;
     }
 }
-
+async function replaceArgs(filePath: string, plugin: OpenFilesPlugin) {
+    const args = filePath.match(/\{\{([^}]+)\}\}/g);
+    if (args) {
+        args.forEach(arg => {
+            let argName = arg.replace(/\{\{([^}]+)\}\}/g, '$1');
+            if (argName.startsWith('date:') || argName.startsWith('d:')) {
+                argName = argName.replace('date:', '').replace('d:', '');
+                const argValue = moment().format(argName);
+                filePath = filePath.replace(arg, argValue);
+            }
+            const customVariable = plugin.settings.customVariables.find(e => e.name == argName);
+            if (!customVariable) return;
+            if (argName != customVariable.name) return;
+            if (customVariable.type === 'javascript') {
+                const myFunction = new Function(customVariable.value);
+                filePath = filePath.replace(arg, myFunction());
+            } else {
+                filePath = filePath.replace(arg, customVariable.value);
+            }
+        })
+    }
+    return filePath;
+}
+function getLeaf(plugin: OpenFilesPlugin, leaf: WorkspaceLeaf | null, fileCommand: FileCommand, files: TFile[] = [], file: TFile) {
+    switch (fileCommand?.openFileIn) {
+        case 'activeTab':
+            leaf = plugin.app.workspace.getLeaf(false);
+            break;
+        case 'newTab':
+            leaf = plugin.app.workspace.getLeaf('tab');
+            break;
+        case 'newTabSplitHorizontal':
+            leaf = plugin.app.workspace.getLeaf('split', 'horizontal');
+            break;
+        case 'newTabSplit':
+            leaf = plugin.app.workspace.getLeaf('split', 'vertical');
+            break;
+        case 'rightLeaf':
+            plugin.app.workspace.getLeavesOfType('markdown').forEach(leaf => {
+                if (leaf.getRoot() === plugin.app.workspace.rightSplit &&
+                    leaf.view instanceof FileView &&
+                    leaf.view.file.path == file.path) {
+                    if (leaf.view instanceof FileView && leaf.view.file.path == file.path) {
+                        plugin.app.workspace.revealLeaf(leaf)
+                        return files.push(leaf.view.file);
+                    }
+                }
+            })
+            if (files.length > 0) return;
+            leaf = plugin.app.workspace.getRightLeaf(false);
+            plugin.app.workspace.revealLeaf(leaf);
+            break;
+        case 'leftLeaf':
+            plugin.app.workspace.getLeavesOfType('markdown').forEach(leaf => {
+                if (leaf.getRoot() === plugin.app.workspace.leftSplit &&
+                    leaf.view instanceof FileView &&
+                    leaf.view.file.path == file.path) {
+                    plugin.app.workspace.revealLeaf(leaf)
+                    return files.push(leaf.view.file);
+                }
+            })
+            if (files.length > 0) return;
+            leaf = plugin.app.workspace.getLeftLeaf(false);
+            plugin.app.workspace.revealLeaf(leaf);
+            break;
+        default:
+            leaf = plugin.app.workspace.getLeaf(false);
+            break;
+    }
+    return leaf;
+}

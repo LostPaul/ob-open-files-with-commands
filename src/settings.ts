@@ -1,17 +1,25 @@
-import { PluginSettingTab, Setting, App, TFile, Notice, Platform } from 'obsidian';
+import { PluginSettingTab, Setting, App, TFile, Notice, Platform, moment } from 'obsidian';
 import OpenFilesPlugin from './main';
 import { FileSuggest } from './suggesters/FileSuggester';
 import { FileCommand } from './FileCommand';
+import ManageVariablesModal from './manageVariables';
 export type openFileIn = 'newTab' | 'newTabSplit' | 'newTabSplitHorizontal' | 'activeTab' | 'rightLeaf' | 'leftLeaf';
+export interface Variable {
+    name: string;
+    value: string;
+    type: 'string' | 'javascript';
+} 
 export interface OpenFilesSettings {
     commands: FileCommand[];
+    customVariables: Variable[];
     openNewTab: boolean;
     openFileIn: openFileIn;
 }
 export const DEFAULT_SETTINGS: OpenFilesSettings = {
-    commands: [],
     openNewTab: false,
-    openFileIn: 'activeTab'
+    openFileIn: 'activeTab',
+    commands: [],
+    customVariables: [],
 }
 export class SettingsTab extends PluginSettingTab {
     plugin: OpenFilesPlugin;
@@ -50,7 +58,17 @@ export class SettingsTab extends PluginSettingTab {
                 })
         }
         new Setting(containerEl)
+            .setName('Custom Variables')
+            .addButton((button) => {
+                button
+                    .setButtonText('Manage Variables')
+                    .onClick(() => {
+                        new ManageVariablesModal(this.app, this.plugin, this).open();
+                    });
+            });
+        new Setting(containerEl)
             .setHeading()
+            .setClass('ofwc-commands-heading')
             .setName('Manage commands')
         new Setting(containerEl)
             .setName('Create a new command')
@@ -127,7 +145,6 @@ export class SettingsTab extends PluginSettingTab {
             s.onChange(async () => {
                 const path = s.getValue();
                 const file = this.plugin.app.vault.getAbstractFileByPath(path);
-                if (!(file instanceof TFile)) { return false; }
                 if (this.plugin.commands.findIndex(e => e?.id == fileCommand.id) == -1) {
                     if (this.plugin.settings.commands.some(e => e?.id == fileCommand.id)) {
                         fileCommand.filePath = path;
@@ -145,7 +162,6 @@ export class SettingsTab extends PluginSettingTab {
                     }
                 } else {
                     fileCommand.filePath = path;
-                    fileCommand = this.createFileCommand(fileCommand.name, path, this.plugin, fileCommand)
                     if (!fileCommand.updateCommand(fileCommand)) {
                         fileCommand.filePath = this.plugin.settings.commands.find(e => e?.id == fileCommand.id)?.filePath || fileCommand.filePath;
                         this.plugin.commands[this.plugin.commands.findIndex(e => e?.id == fileCommand.id)] = fileCommand;
