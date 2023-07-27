@@ -18,8 +18,15 @@ export default class ManageVariablesModal extends Modal {
         const { contentEl } = this;
         contentEl.addClass('variable-settings');
         contentEl.empty();
+        const desc = document.createDocumentFragment();
+        desc.append(
+            'The date format can be found at ',
+            createEl('a', { href: 'https://momentjs.com/docs/#/displaying/format/', text: 'https://momentjs.com/docs/#/displaying/format/' }),
+            ' e.g. {{d:YYYY-MM-DD}} (case sensitive)'
+        )
         new Setting(contentEl)
             .setName('Manage Variables')
+            .setDesc(desc)
             .addButton((button) => {
                 button
                     .setButtonText('Add Variable')
