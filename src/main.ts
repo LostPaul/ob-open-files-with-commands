@@ -37,6 +37,7 @@ export default class OpenFilesPlugin extends Plugin {
 
 		this.registerEvent(this.app.vault.on('rename', (file: TAbstractFile, oldPath: string) => {
 			if (!(file instanceof TFile)) return;
+			if (!this.settings.updateCommandsOnRename) return;
 			const fileCommand = this.commands.find(c => c.filePath == oldPath);
 			if (fileCommand) {
 				const name = file.name.replace(".md", "");
@@ -46,6 +47,7 @@ export default class OpenFilesPlugin extends Plugin {
 		}));
 
 		this.registerEvent(this.app.vault.on('delete', (file: TAbstractFile) => {
+			if (!this.settings.deleteCommandWhenFileIsDeleted) return;
 			const fileCommand = this.commands.find(c => c.filePath == file.path);
 			if (fileCommand) {
 				this.settingsTab.deleteCommand(fileCommand.id);

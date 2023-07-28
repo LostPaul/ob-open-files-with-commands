@@ -14,10 +14,14 @@ export interface OpenFilesSettings {
     customVariables: Variable[];
     openNewTab: boolean;
     openFileIn: openFileIn;
+    deleteCommandWhenFileIsDeleted: boolean;
+    updateCommandsOnRename: boolean;
 }
 export const DEFAULT_SETTINGS: OpenFilesSettings = {
     openNewTab: false,
     openFileIn: 'activeTab',
+    deleteCommandWhenFileIsDeleted: true,
+    updateCommandsOnRename: true,
     commands: [],
     customVariables: [
         {
@@ -68,6 +72,26 @@ export class SettingsTab extends PluginSettingTab {
                     });
                 })
         }
+        new Setting(containerEl)
+            .setName('Delete command when file is deleted')
+            .setDesc('If you delete a file, the command for that file will be deleted as well')
+            .addToggle(cb => {
+                cb.setValue(this.plugin.settings.deleteCommandWhenFileIsDeleted);
+                cb.onChange(async (val) => {
+                    this.plugin.settings.deleteCommandWhenFileIsDeleted = val;
+                    await this.plugin.saveSettings();
+                });
+            })
+        new Setting(containerEl)
+            .setName('Update command when file is renamed')
+            .setDesc('If you rename a file, the command for that file will be updated as well')
+            .addToggle(cb => {
+                cb.setValue(this.plugin.settings.updateCommandsOnRename);
+                cb.onChange(async (val) => {
+                    this.plugin.settings.updateCommandsOnRename = val;
+                    await this.plugin.saveSettings();
+                });
+            })
         new Setting(containerEl)
             .setName('Custom Variables')
             .addButton((button) => {
